@@ -9,7 +9,7 @@ library(XLConnect)
 #' @param writepath Path + file name to save xlsx.
 #' @return Data summary.
 #' @export
-summarise <- function(dt, writepath = getwd()) {
+summarise <- function(dt, writepath = str_c(getwd(), "/Data Summary.xlsx")) {
 
    # rows & columns
    dims <- dim(dt)
@@ -24,6 +24,7 @@ summarise <- function(dt, writepath = getwd()) {
                  Class = lapply(.SD, function(x) class(x)[1]),
                  Missing = lapply(.SD, function(x) sum(is.na(x))),
                  MissingRate =  lapply(.SD, function(x) sum(is.na(x))/.N),
+                 EmptyRate = lapply(.SD, function(x) sum(x == "")/.N),
                  Min = lapply(.SD, min, na.rm = TRUE),
                  Max = lapply(.SD, max, na.rm = TRUE))]
 
@@ -37,22 +38,23 @@ summarise <- function(dt, writepath = getwd()) {
           data.table(t(dt[, lapply(.SD, function(x) c(unique(x), rep("", 5 - uniqueN(x)))),
                           .SDcols = (cols)]))]
 
-   out <- cbind(out[, 1:6], out[, lapply(.SD, function(x) lapply(x, as.character)), .SDcols = 7:13])
+   out <- cbind(out[, 1:7], out[, lapply(.SD, function(x) lapply(x, as.character)), .SDcols = 8:14])
    out <- out[, lapply(.SD, unlist)]
    # out[Class == "numeric", `:=`(Min = as.numeric(Min), Max = as.numeric(Max))]
-
-   cat("Writing Excel...\n")
-   file.copy(from = "D:/Users/shane.mono/00. Random/Snippets/Data Summary Template.xlsx",
-             to = writepath, overwrite = TRUE)
-   wb <- loadWorkbook(writepath)
-   setStyleAction(wb, XLC$"STYLE_ACTION.NONE")
-   writeWorksheet(wb, out, "Data Summary", startRow=9, startCol=2, header=TRUE)
-   writeWorksheet(wb, dims, "Data Summary", startRow=5, startCol=3, header=FALSE)
-
-
-
-   saveWorkbook(wb)
-
+   
+   if(!is.null (writepath) ) {
+      cat("Writing Excel...\n")
+      file.copy(from = "D:/Users/shane.mono/00. Random/Snippets/Data Summary Template.xlsx",
+                to = writepath, overwrite = TRUE)
+      wb <- loadWorkbook(writepath)
+      setStyleAction(wb, XLC$"STYLE_ACTION.NONE")
+      writeWorksheet(wb, out, "Data Summary", startRow=9, startCol=2, header=TRUE)
+      writeWorksheet(wb, dims, "Data Summary", startRow=5, startCol=3, header=FALSE)
+      
+      
+      saveWorkbook(wb)
+   }
+   
    return(out)
 
 }
@@ -115,9 +117,9 @@ excel.names <- function(dt) {
 #' @param format Date format. Default to \code{"%Y-%m-%d"}.
 #' @value Returns the data table.
 #' @export
-convert.dates <- function(dt, format = "%Y-%m-%d") {
+convert.dates <- function(dt, additonal.cols = c(), format = "%Y-%m-%d") {
 
-   datecols <- names(dt)[names(dt) %like% "date"]
+   datecols <- c(names(dt)[names(dt) %like% "date"], additional.cols)
    cat(length(datecols), " date columns found.\n")
 
    for(i in 1:length(datecols)) {
