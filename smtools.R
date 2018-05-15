@@ -1,3 +1,8 @@
+# ======== SM TOOLS ======== #
+# ======== 0000-00-00 ======== #
+# -------- shane.mono -------- #
+
+
 library(data.table)
 library(stringr)
 library(XLConnect)
@@ -128,4 +133,71 @@ convert.dates <- function(dt, additonal.cols = c(), format = "%Y-%m-%d") {
    }
    return(dt)
 
+}
+
+
+
+#' Generate sript headers.
+#' 
+#' @export
+gen.headers <- function() {
+  str_c("# ======== WRITE STH NICE ======== #\n# ======== ", 
+        format(Sys.time(), "%Y-%m-%d"),
+        "======== #\n# -------- shane.mono -------- #") %>% 
+    writeClipboard()
+}
+
+gen.headers()
+
+
+#' Save some time typing ". Parse one string to a vector.
+#' 
+#' @param string A string to be parsed.
+#' @param sep Default \code{,}.
+#' @export
+parse2v <- function(string, sep = ",") {
+  return(unlist(str_split(test, ",")))
+}
+
+
+#' Pivot table inspired grouping?
+#' 
+#' @param col Vector; use in \code{data.table}.
+#' @param strgroup Grouping string in the format of \code{"Other+Unknown=Other"}.
+#' Supports fuzzy match. \code{"O+U=Other"}, if Other and Unknown are the only categories
+#' starting with O and U. Supports \code{"NA+U=Other"}. For blanks, use \code{"$+O=Other"}.
+#' @param suffix Suffix of created grouped column.
+#' @param new Create a new column of the grouped categories. Default to \code{FALSE}.
+#' @details No debugging / error catching.
+#' @value A lookup table with unique values from \code{col} and grouped values.
+#' @example billing[, pgroup(cust.group, "O+U=Other")] # group Other and Unknown into Other
+#' billing[, cust.group2 := pgroup(cust.group, "$+O+U+NA=Other", new = TRUE)]
+#' @export
+pgroup <- function(col, strgroup, suffix = ".grp", new = FALSE) {
+  
+  colnm <- deparse(substitute(col))
+  col0 <- copy(col)
+  col <- unique(col)
+  col2 <- col
+  vec <- unlist(str_split(strgroup, ","))
+  
+  for(i in 1:length(vec)) {
+    ele <- unlist(str_split(vec[i], "\\+|="))
+    if (any(ele=="NA")) col2[is.na(col)] <- ele[length(ele)]
+    children <- unlist(lapply(ele[-length(ele)], function(x) col[col %like% str_c("^", x)]))
+    col2[col2 %in% children] <- ele[length(ele)]
+    
+  }
+  
+  out <- data.table(col, col2)
+  setnames(out, c(colnm, str_c(colnm, suffix)))
+  
+  
+  if(new) {
+    for(i in 1:length(col)) col0[col0 == col[i]] <- col2[i]
+    return(col0)
+  }
+  
+  return(out)
+  
 }
