@@ -215,24 +215,24 @@ pgroup <- function(col, strgroup, suffix = ".grp", new = FALSE) {
 }
 
 
-#' Examine whether one column is a data table is unique by another
+#' Examine whether one column in a data table is unique by another
 #' 
-#' @param x Column name without quote; the key which other columns should be unique by.
+#' @param x A list of column names or one column name without quote; the key which other columns should be unique by.
 #' @param ... Other columns to investigate uniqueness.
 #' @details No debugging / error catching.
 #' @value Returns a vector with the same length as \code{...} with values \code{TRUE} or \code{FALSE}.
 #' @example dt[, ifunique(id, name, status)]
+#' dt[, ifunique(list(tour.code, date), tour.name, adult.price)]
 #' @export
-
-# TODO add multiple keys
 ifunique <- function(x, ...) {
   
+  if(class(x) == "list") n <- length(x) else {x <- list(x); n <- 1}
   y <- list(...)
   out <- c()
   for(i in 1:length(y)) {
     z <- y[[i]]
-    dt <- data.table(x, z)
-    dupe <- dt[, .N, by = .(x, z)][, .N, by = x][N > 1]
+    dt <- data.table(do.call(cbind, x), z)
+    dupe <- dt[, .N, by = c(paste0("V", 1:n), "z")][, .N, by = c(paste0("V", 1:n))][N > 1]
     if(nrow(dupe) == 0) res <- TRUE else res <- FALSE
     out <- c(out, res)
   }
@@ -240,7 +240,6 @@ ifunique <- function(x, ...) {
   
   
 }
-
 
 
 fuzzymatch <- function(x, y, n = 3, ...) {
