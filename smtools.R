@@ -11,7 +11,7 @@ library(stringdist)
 #' Summarise data columns.
 #'
 #' @param dt Data table to summarise.
-#' @param writepath Path + file name to save xlsx.
+#' @param writepath Path + file name to save xlsx; can be \code{NULL}.
 #' @return Data summary.
 #' @export
 summarise <- function(dt, writepath = str_c(getwd(), "/Data Summary.xlsx"), append = "Data Summary") {
@@ -242,6 +242,16 @@ ifunique <- function(x, ...) {
 }
 
 
+#' Fuzzy match; suggest possible match results
+#' 
+#' @param x A vector to be matched.
+#' @param y A vector to find the match from.
+#' @param n Number of match results; default to 3.
+#' @param ... Further arguments to be passed onto \code{stringdistmatrix}.
+#' @details No debugging / error catching. Used \code{stringdistmatrix} from \code{stringdist}.
+#' @value Returns a \code{data.table} with the vector to be matched and \code{n} columns of closest matches.
+#' @example fuzzymatch(raw.names, master.names)
+#' @export
 fuzzymatch <- function(x, y, n = 3, ...) {
   
   x <- unique(x)
@@ -260,6 +270,13 @@ fuzzymatch <- function(x, y, n = 3, ...) {
 }
 
 
+#' Set difference between two vectors; imagine the Venn Diagram
+#' 
+#' @param x A vector.
+#' @param y A vector.
+#' @value Returns lengths, # common entries, # entries only in x and in y.
+#' @example set.diff(code1, code2)
+#' @export
 set.diff <- function(x, y) {
   
   xnm <- deparse(substitute(x))
