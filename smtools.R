@@ -6,7 +6,7 @@
 library(data.table)
 library(stringr)
 library(XLConnect)
-library(stringdist)
+library(progress)
 
 #' Summarise data columns.
 #'
@@ -252,11 +252,11 @@ ifunique <- function(x, ...) {
 #' @value Returns a \code{data.table} with the vector to be matched and \code{n} columns of closest matches.
 #' @example fuzzymatch(raw.names, master.names)
 #' @export
-fuzzymatch <- function(x, y, n = 3, ...) {
+fuzzymatch <- function(x, y, n = 2, ...) {
   
-  x <- unique(x)
+  x <- unique(x) 
   y <- unique(y)
-  match.matrix <- stringdistmatrix(x, y, ...)
+  match.matrix <- stringdist::stringdistmatrix(str_to_upper(x), str_to_upper(y), ...)
   rank.matrix <- t(apply(match.matrix, 1, frank, ties.method = "random"))
   for (i in 1:n) {
     match.index <- apply(rank.matrix, 1, function(x) which(x == i)) %>% unlist
@@ -274,10 +274,13 @@ fuzzymatch <- function(x, y, n = 3, ...) {
 #' 
 #' @param x A vector.
 #' @param y A vector.
-#' @value Returns lengths, # common entries, # entries only in x and in y.
+#' @param res Return data; see \code{value}.
+#' @value Returns lengths, # common entries, # entries only in x and in y. If \code{res = 0}, returns
+#' common elements, \code{res = 1} returns elements in x only, and \code{res = 2} returns in y only.
+#' Any other values would return the summary table only. 
 #' @example set.diff(code1, code2)
 #' @export
-set.diff <- function(x, y) {
+set.diff <- function(x, y, res = -1) {
   
   xnm <- deparse(substitute(x))
   ynm <- deparse(substitute(y))
@@ -288,10 +291,63 @@ set.diff <- function(x, y) {
                     ynm = c(length(y), length(intersect(x, y)), 0, length(setdiff(y, x))))
   setnames(out, c(xnm, ynm))
   out <- cbind(value = c("length", "common", "in x only", "in y only"), out)
-  return(out)
+  
+  if (res == 0) outv <- intersect(x, y)
+  if (res == 1) outv <- setdiff(x, y)
+  if (res == 2) outv <- setdiff(y, x)
+  
+  if(res == 0) return(list(setdiff = out, common = outv)) else
+    if(res == 1) return(list(setdiff = out, in.x.only = outv)) else
+      if (res == 2) return(list(setdiff = out, in.y.only = outv)) else
+        return(out)
   
   
 }
 
 
+#' Progress bar for loops - no need to set up every time
+#' 
+#' @param ind Index in the loop.
+#' @param total Size of loop.
+#' @example for(i in 12:50) {
+#'     report.progress(i, 50)
+#'     Sys.sleep(0.05)
+#' }
+#' @export
+report.progress <- function(ind, total) {
+  
+  if (!exists("progressbarsm")) {
+    cat("  Starting at", format(Sys.time(), "%H:%M"), "...\n")
+    progressbarsm <<- progress_bar$new(
+      format = "  Processed :ind of :total [:bar] :percent in :elapsed",
+      clear = FALSE, total = total)
+    progressbarsm$tick(ind-1)
+  }
+  
+  progressbarsm$tick(tokens = list(ind = ind, total = total))
+  
+  if (ind == total) {
+    cat("  Finished at", format(Sys.time(), "%H:%M"), ".\n") 
+    rm(progressbarsm, pos = ".GlobalEnv")
+  }
+  
+}
 
+
+#' Detect string pattern
+#' 
+#' @param col A vector of string.
+#' @param pattern Default to \code{Az0}. Supports \code{Aa0.} where each transforms all big letters,
+#' all small letters, all numbers, everything else to \code{A, a, 0} and \code{.}.
+#' @example dt[, .N, by = str.pattern(tour.code)][order(-N)]  # count of code patterns
+#' @export
+str.pattern <- function(col, pattern = "Aa0") {
+  
+  if(pattern %like% "A") col <- gsub("[A-Z]", "A", col)
+  if(pattern %like% "a") col <- gsub("[a-z]", "a", col)
+  if(pattern %like% "0") col <- gsub("[0-9]", "0", col)
+  if(pattern %like% "\\.") col <- gsub("[^0-9A-Za-z]", "\\.", col)
+  
+  return(col)
+  
+}
