@@ -156,7 +156,7 @@ convert.dates <- function(dt, additional.cols = NULL, format = "%Y-%m-%d") {
 gen.headers <- function(title = "WRITE STH NICE") {
   str_c("# ======== ", str_to_upper(title), " ======== #\n# ======== ", 
         format(Sys.time(), "%Y-%m-%d"),
-        "======== #\n# -------- shane.mono -------- #") %>% 
+        " ======== #\n# -------- shane.mono -------- #") %>% 
     writeClipboard()
 }
 
@@ -246,13 +246,15 @@ ifunique <- function(x, ...) {
 #' 
 #' @param x A vector to be matched.
 #' @param y A vector to find the match from.
-#' @param n Number of match results; default to 3.
+#' @param matchdt Optional. A data table with the first column being \code{y}. This is to help facilitate
+#' fuzzy match to raw names of alread matched names, and then merge to master names in one go.
+#' @param n Number of match results; default to 2.
 #' @param ... Further arguments to be passed onto \code{stringdistmatrix}.
 #' @details No debugging / error catching. Used \code{stringdistmatrix} from \code{stringdist}.
 #' @value Returns a \code{data.table} with the vector to be matched and \code{n} columns of closest matches.
 #' @example fuzzymatch(raw.names, master.names)
 #' @export
-fuzzymatch <- function(x, y, n = 2, ...) {
+fuzzymatch <- function(x, y, matchdt = NULL, n = 2, ...) {
   
   x <- unique(x) 
   y <- unique(y)
@@ -263,9 +265,21 @@ fuzzymatch <- function(x, y, n = 2, ...) {
     match.res <- y[match.index]
     if (i == 1) out <- match.res else out <- cbind(out, match.res)
   }
+  
   out <- data.table(x, out)
   setnames(out, c("raw", str_c("match", 1:n)))
-  return(out)
+  
+  if(!is.null(matchdt)) {
+    
+    out[, N := 1:.N]
+    setnames(matchdt, 1, "match1")
+    out <- merge(out, matchdt, by = "match1", all.x = TRUE)
+    out <- out[order(N)]
+    out[, N := NULL]
+    
+  }
+  
+  return(out[])
   
 }
 
@@ -349,5 +363,50 @@ str.pattern <- function(col, pattern = "Aa0") {
   if(pattern %like% "\\.") col <- gsub("[^0-9A-Za-z]", "\\.", col)
   
   return(col)
+  
+}
+
+
+#' Case-insensitive %like%
+#' 
+#' @param x String to be detected.
+#' @param pattern String pattern (regex), case insensitive.
+#' @export
+`%Like%` <- function (x, pattern) { 
+  stringi::stri_detect_regex(x, pattern, case_insensitive=TRUE)
+}
+
+
+#' Detect NA or blank
+#' 
+#' @param x A vector
+#' @example dt <- dt[!naorb(col)]
+#' @export
+naorb <- function(x) {
+  x <- str_trim(x)
+  out <- is.na(x)
+  out2 <- x == ""
+  out <- out | out2
+  return(out)
+}
+
+
+#' Difference of dates in months
+#' 
+#' @param date Date in format \code{%Y-%m-%d}, the \code{-} can be any single symbol, such as \code{/}.
+#' @param refdate Reference date in the same format.
+#' @param since If \code{TRUE}, months since date to reference date, eg from date to now (ref), else
+#' month from reference date to date, eg from now (ref) to a future dat)
+#' @values A vector of same length
+#' @export
+months.diff <- function(date, refdate, since = TRUE) {
+  
+  y.refdate <- as.integer(str_sub(refdate, 1, 4))
+  m.refdate <- as.integer(str_sub(refdate, 6, 7))
+  y.date <- as.integer(str_sub(date, 1, 4))
+  m.date <- as.integer(str_sub(date, 6, 7))
+  
+  diff.in.months <- 12 * (y.refdate - y.date) + m.refdate - m.date
+  if (since) return(diff.in.months) else return(-diff.in.months)
   
 }
