@@ -12,6 +12,8 @@ library(progress)
 #'
 #' @param dt Data table to summarise.
 #' @param writepath Path + file name to save xlsx; can be \code{NULL}.
+#' @param append Whether the summary should be appended to the workbook; any strings except "Data Summary" mean
+#' append; otherwise the summary table is written on the worksheet "Data Summary".
 #' @return Data summary.
 #' @export
 summarise <- function(dt, writepath = str_c(getwd(), "/Data Summary.xlsx"), append = "Data Summary") {
@@ -130,20 +132,21 @@ excel.names <- function(dt) {
 #' Convert all columns with "date" in col names to Date format.
 #'
 #' @param dt Data table.
+#' @param additional.cols Additional date columns to be parsed other than columns with the string "date".
 #' @param format Date format. Default to \code{"%Y-%m-%d"}.
 #' @value Returns the data table.
+#' @details \code{convert.dates} automatically finds columns with "date" in the name and converts to \code{Date}.
+#' Additional columns can be parsed on for parsing. Cannot handle multiple date formats.
 #' @export
 convert.dates <- function(dt, additional.cols = NULL, format = "%Y-%m-%d") {
   
-  if(!is.null(additional.cols)) datecols <- c(names(dt)[names(dt) %like% "date"], additional.cols) else
-    datecols <- names(dt)[names(dt) %like% "date"]
+  if(!is.null(additional.cols)) datecols <- c(names(dt)[names(dt) %Like% "date"], additional.cols) else
+    datecols <- names(dt)[names(dt) %Like% "date"]
   
   cat(length(datecols), " date columns found.\n")
   
-  for(i in 1:length(datecols)) {
-    dt[, (datecols[i]) := as.Date(get(datecols[i]), format = format)]
-    
-  }
+  dt[, (datecols) := lapply(.SD, as.Date, format = format), .SDcols = datecols]
+  
   return(dt)
   
 }
@@ -323,28 +326,31 @@ set.diff <- function(x, y, res = -1) {
 #' 
 #' @param ind Index in the loop.
 #' @param total Size of loop.
-#' @example for(i in 12:50) {
-#'     report.progress(i, 50)
-#'     Sys.sleep(0.05)
+#' @param startind Starting index of the loop.
+#' @example setup.pb(100)
+#' for(i in 12:100) {
+#'     pb.tick(12, i , 100)
+#'     Sys.sleep(0.02)
 #' }
+#' @details No error catching, especially around interrupted loops and start index.
 #' @export
-report.progress <- function(ind, total) {
-  
-  if (!exists("progressbarsm")) {
+setup.pb <- function(total) {
+  progressbarsm <<- progress_bar$new(
+    format = "  Processed :ind of :total [:bar] :percent in :elapsed",
+    clear = FALSE, total = total)
+}
+#' @export
+pb.tick <- function(startind, ind, total) {
+  if (startind > ind) stop("  Start index > index.")
+  if (startind == ind) {
     cat("  Starting at", format(Sys.time(), "%H:%M"), "...\n")
-    progressbarsm <<- progress_bar$new(
-      format = "  Processed :ind of :total [:bar] :percent in :elapsed",
-      clear = FALSE, total = total)
-    progressbarsm$tick(ind-1)
+    progressbarsm$tick(ind - 1)
   }
-  
   progressbarsm$tick(tokens = list(ind = ind, total = total))
-  
   if (ind == total) {
-    cat("  Finished at", format(Sys.time(), "%H:%M"), ".\n") 
+    cat("\n  Finished at", format(Sys.time(), "%H:%M"), ".\n") 
     rm(progressbarsm, pos = ".GlobalEnv")
   }
-  
 }
 
 
@@ -401,12 +407,17 @@ naorb <- function(x) {
 #' @export
 months.diff <- function(date, refdate, since = TRUE) {
   
-  y.refdate <- as.integer(str_sub(refdate, 1, 4))
-  m.refdate <- as.integer(str_sub(refdate, 6, 7))
-  y.date <- as.integer(str_sub(date, 1, 4))
-  m.date <- as.integer(str_sub(date, 6, 7))
+  if(class(date) == "Date" & class(refdate) == "Date") {
+    diff.in.months <- 12 * (year(refdate) - year(date)) + month(refdate) - month(date)
+  } else {
+    y.refdate <- as.integer(str_sub(refdate, 1, 4))
+    m.refdate <- as.integer(str_sub(refdate, 6, 7))
+    y.date <- as.integer(str_sub(date, 1, 4))
+    m.date <- as.integer(str_sub(date, 6, 7))
+    
+    diff.in.months <- 12L * (y.refdate - y.date) + m.refdate - m.date
+  }
   
-  diff.in.months <- 12 * (y.refdate - y.date) + m.refdate - m.date
   if (since) return(diff.in.months) else return(-diff.in.months)
   
 }
