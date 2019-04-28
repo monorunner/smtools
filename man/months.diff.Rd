@@ -2,7 +2,7 @@
 % Please edit documentation in R/smtools.R
 \name{months.diff}
 \alias{months.diff}
-\title{Difference of dates in months}
+\title{Difference of dates in months.}
 \usage{
 \method{months}{diff}(date, refdate, since = TRUE)
 }
@@ -14,5 +14,5 @@ date to now (ref), else
 month from reference date to date, eg from now (ref) to a future dat)}
 }
 \description{
-Difference of dates in months
+Difference of dates in months.
 }

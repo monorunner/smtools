@@ -2,18 +2,18 @@
 % Please edit documentation in R/smtools.R
 \name{ifunique}
 \alias{ifunique}
-\title{Examine whether one column in a data table is unique by another}
+\title{Examine whether one column in a data table is unique by another.}
 \usage{
-ifunique(x, ...)
+ifunique(keycols, ...)
 }
 \arguments{
-\item{x}{A list of column names or one column name without quote; the key
+\item{keycols}{A list of column names or one column name without quote; the key
 which other columns should be unique by.}
 
 \item{...}{Other columns to investigate uniqueness.}
 }
 \description{
-Examine whether one column in a data table is unique by another
+Examine whether one column in a data table is unique by another.
 }
 \details{
 No debugging / error catching.

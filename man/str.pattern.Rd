@@ -2,7 +2,7 @@
 % Please edit documentation in R/smtools.R
 \name{str.pattern}
 \alias{str.pattern}
-\title{Detect string pattern}
+\title{Detect string pattern.}
 \usage{
 \method{str}{pattern}(col, pattern = "Aa0")
 }
@@ -15,5 +15,5 @@ all small letters, all numbers, everything else to \code{A, a, 0}
 and \code{.}.}
 }
 \description{
-Detect string pattern
+Detect string pattern.
 }

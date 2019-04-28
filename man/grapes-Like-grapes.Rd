@@ -2,7 +2,7 @@
 % Please edit documentation in R/smtools.R
 \name{\%Like\%}
 \alias{\%Like\%}
-\title{Case-insensitive %like%}
+\title{Case-insensitive %like%.}
 \usage{
 x \%Like\% pattern
 }
@@ -12,5 +12,5 @@ x \%Like\% pattern
 \item{pattern}{String pattern (regex), case insensitive.}
 }
 \description{
-Case-insensitive %like%
+Case-insensitive %like%.
 }

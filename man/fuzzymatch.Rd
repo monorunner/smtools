@@ -2,7 +2,7 @@
 % Please edit documentation in R/smtools.R
 \name{fuzzymatch}
 \alias{fuzzymatch}
-\title{Fuzzy match; suggest possible match results}
+\title{Fuzzy match; suggest possible match results.}
 \usage{
 fuzzymatch(x, y, matchdt = NULL, n = 2, ...)
 }
@@ -20,7 +20,7 @@ and then merge to master names in one go.}
 \item{...}{Further arguments to be passed onto \code{stringdistmatrix}.}
 }
 \description{
-Fuzzy match; suggest possible match results
+Fuzzy match; suggest possible match results.
 }
 \details{
 No debugging / error catching. Used \code{stringdistmatrix} from 

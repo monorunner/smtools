@@ -2,7 +2,7 @@
 % Please edit documentation in R/smtools.R
 \name{naorb}
 \alias{naorb}
-\title{Detect NA or blank}
+\title{Detect NA or blank.}
 \usage{
 naorb(x)
 }
@@ -10,5 +10,5 @@ naorb(x)
 \item{x}{A vector}
 }
 \description{
-Detect NA or blank
+Detect NA or blank.
 }

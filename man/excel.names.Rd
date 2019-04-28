@@ -2,7 +2,7 @@
 % Please edit documentation in R/smtools.R
 \name{excel.names}
 \alias{excel.names}
-\title{Convert col names to title names}
+\title{Convert col names to title names.}
 \usage{
 excel.names(dt)
 }
@@ -10,5 +10,5 @@ excel.names(dt)
 \item{x}{Data to convert col names back to Proper Title Case.}
 }
 \description{
-Convert col names to title names
+Convert col names to title names.
 }

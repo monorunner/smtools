@@ -2,7 +2,7 @@
 % Please edit documentation in R/smtools.R
 \name{pgroup}
 \alias{pgroup}
-\title{Pivot table inspired grouping?}
+\title{Pivot table inspired grouping.}
 \usage{
 pgroup(col, strgroup, suffix = ".grp", new = FALSE)
 }
@@ -20,7 +20,7 @@ use \code{"$+O=Other"}.}
 \code{FALSE}.}
 }
 \description{
-Pivot table inspired grouping?
+Pivot table inspired grouping.
 }
 \details{
 No debugging / error catching.

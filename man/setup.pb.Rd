@@ -2,7 +2,7 @@
 % Please edit documentation in R/smtools.R
 \name{setup.pb}
 \alias{setup.pb}
-\title{Progress bar for loops - no need to set up every time}
+\title{Progress bar for loops - no need to set up every time.}
 \usage{
 setup.pb(total)
 }
@@ -14,7 +14,7 @@ setup.pb(total)
 \item{startind}{Starting index of the loop.}
 }
 \description{
-Progress bar for loops - no need to set up every time
+Progress bar for loops - no need to set up every time.
 }
 \details{
 No error catching, especially around interrupted loops and 

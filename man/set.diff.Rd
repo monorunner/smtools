@@ -2,7 +2,7 @@
 % Please edit documentation in R/smtools.R
 \name{set.diff}
 \alias{set.diff}
-\title{Set difference between two vectors; imagine the Venn Diagram}
+\title{Set difference between two vectors; imagine the Venn Diagram.}
 \usage{
 set.diff(x, y, res = -1)
 }
@@ -14,5 +14,5 @@ set.diff(x, y, res = -1)
 \item{res}{Return data; see \code{value}.}
 }
 \description{
-Set difference between two vectors; imagine the Venn Diagram
+Set difference between two vectors; imagine the Venn Diagram.
 }

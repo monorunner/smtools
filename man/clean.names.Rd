@@ -2,7 +2,7 @@
 % Please edit documentation in R/smtools.R
 \name{clean.names}
 \alias{clean.names}
-\title{Clean column names in a data table}
+\title{Clean column names in a data table.}
 \usage{
 clean.names(dt)
 }
@@ -10,5 +10,5 @@ clean.names(dt)
 \item{dt}{Data table to clean names.}
 }
 \description{
-Clean column names in a data table
+Clean column names in a data table.
 }
