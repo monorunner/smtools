@@ -12,11 +12,13 @@ library(progress)
 #'
 #' @param dt Data table to summarise.
 #' @param writepath Path + file name to save xlsx; can be \code{NULL}.
-#' @param append Whether the summary should be appended to the workbook; any strings except "Data Summary" mean
-#' append; otherwise the summary table is written on the worksheet "Data Summary".
+#' @param append Whether the summary should be appended to the workbook; any 
+#' strings except "Data Summary" mean append; otherwise the summary table is
+#' written on the worksheet "Data Summary".
 #' @return Data summary.
 #' @export
-summarise <- function(dt, writepath = str_c(getwd(), "/Data Summary.xlsx"), append = "Data Summary") {
+summarise <- function(dt, writepath = str_c(getwd(), "/Data Summary.xlsx"), 
+                      append = "Data Summary") {
   
   # rows & columns
   dims <- dim(dt)
@@ -31,7 +33,8 @@ summarise <- function(dt, writepath = str_c(getwd(), "/Data Summary.xlsx"), appe
                 Class = lapply(.SD, function(x) class(x)[1]),
                 Missing = lapply(.SD, function(x) sum(is.na(x))),
                 MissingRate =  lapply(.SD, function(x) sum(is.na(x))/.N),
-                EmptyRate = lapply(.SD, function(x) if(class(x) == "character") sum(x == "")/.N),
+                EmptyRate = lapply(.SD, function(x) 
+                  if(class(x) == "character") sum(x == "")/.N),
                 Min = lapply(.SD, min, na.rm = TRUE),
                 Max = lapply(.SD, max, na.rm = TRUE))]
   
@@ -42,17 +45,22 @@ summarise <- function(dt, writepath = str_c(getwd(), "/Data Summary.xlsx"), appe
   
   out[ColName %in% cols,
       str_c("Level", 1:5) :=
-        data.table(t(dt[, lapply(.SD, function(x) c(unique(x), rep("", 5 - uniqueN(x)))),
+        data.table(t(dt[, lapply(.SD,
+                                 function(x) 
+                                   c(unique(x), rep("", 5 - uniqueN(x)))),
                         .SDcols = (cols)]))]
   
-  out <- cbind(out[, 1:7], out[, lapply(.SD, function(x) lapply(x, as.character)), .SDcols = 8:14])
+  out <- cbind(out[, 1:7], out[, 
+                               lapply(.SD, 
+                                      function(x) lapply(x, as.character)), 
+                               .SDcols = 8:14])
   out <- out[, lapply(.SD, unlist)]
   # out[Class == "numeric", `:=`(Min = as.numeric(Min), Max = as.numeric(Max))]
   
   if(!is.null (writepath) ) {
     cat("Writing Excel...\n")
     if (append == "Data Summary") 
-      file.copy(from = "D:/Users/shane.mono/00. Random/Snippets/Data Summary Template.xlsx",
+      file.copy(from = "./data/Data Summary Template.xlsx",
                 to = writepath, overwrite = TRUE)
     wb <- loadWorkbook(writepath)
     setStyleAction(wb, XLC$"STYLE_ACTION.NONE")
@@ -75,7 +83,8 @@ summarise <- function(dt, writepath = str_c(getwd(), "/Data Summary.xlsx"), appe
 #'
 #' @param x Data to copy to clipboard.
 #' @param row.names Whether to include row names. Default to \code{FALSE}.
-#' @param excel.names Whether to convert col names to Title Case. Default to \code{TRUE}.
+#' @param excel.names Whether to convert col names to Title Case. Default to 
+#' \code{TRUE}.
 #' @export
 cp <- function(x, row.names = FALSE, excel.names = TRUE) {
   if(excel.names)
@@ -132,15 +141,20 @@ excel.names <- function(dt) {
 #' Convert all columns with "date" in col names to Date format.
 #'
 #' @param dt Data table.
-#' @param additional.cols Additional date columns to be parsed other than columns with the string "date".
+#' @param additional.cols Additional date columns to be parsed other than columns 
+#' with the string "date".
 #' @param format Date format. Default to \code{"%Y-%m-%d"}.
 #' @value Returns the data table.
-#' @details \code{convert.dates} automatically finds columns with "date" in the name and converts to \code{Date}.
-#' Additional columns can be parsed on for parsing. Cannot handle multiple date formats.
+#' @details \code{convert.dates} automatically finds columns with "date" in the 
+#' name and converts to \code{Date}.
+#' Additional columns can be parsed on for parsing. Cannot handle multiple date 
+#' formats.
 #' @export
 convert.dates <- function(dt, additional.cols = NULL, format = "%Y-%m-%d") {
   
-  if(!is.null(additional.cols)) datecols <- c(names(dt)[names(dt) %Like% "date"], additional.cols) else
+  if(!is.null(additional.cols)) 
+    datecols <- c(names(dt)[names(dt) %Like% "date"], additional.cols) 
+  else
     datecols <- names(dt)[names(dt) %Like% "date"]
   
   cat(length(datecols), " date columns found.\n")
@@ -179,13 +193,16 @@ parse2v <- function(string, sep = ",") {
 #' 
 #' @param col Vector; use in \code{data.table}.
 #' @param strgroup Grouping string in the format of \code{"Other+Unknown=Other"}.
-#' Supports fuzzy match. \code{"O+U=Other"}, if Other and Unknown are the only categories
-#' starting with O and U. Supports \code{"NA+U=Other"}. For blanks, use \code{"$+O=Other"}.
+#' Supports fuzzy match. \code{"O+U=Other"}, if Other and Unknown are the only 
+#' categories starting with O and U. Supports \code{"NA+U=Other"}. For blanks, 
+#' use \code{"$+O=Other"}.
 #' @param suffix Suffix of created grouped column.
-#' @param new Create a new column of the grouped categories. Default to \code{FALSE}.
+#' @param new Create a new column of the grouped categories. Default to 
+#' \code{FALSE}.
 #' @details No debugging / error catching.
 #' @value A lookup table with unique values from \code{col} and grouped values.
-#' @example billing[, pgroup(cust.group, "O+U=Other")] # group Other and Unknown into Other
+#' @example billing[, pgroup(cust.group, "O+U=Other")] # group Other and Unknown 
+#' into Other
 #' billing[, cust.group2 := pgroup(cust.group, "$+O+U+NA=Other", new = TRUE)]
 #' @export
 pgroup <- function(col, strgroup, suffix = ".grp", new = FALSE) {
@@ -199,7 +216,8 @@ pgroup <- function(col, strgroup, suffix = ".grp", new = FALSE) {
   for(i in 1:length(vec)) {
     ele <- unlist(str_split(vec[i], "\\+|="))
     if (any(ele=="NA")) col2[is.na(col)] <- ele[length(ele)]
-    children <- unlist(lapply(ele[-length(ele)], function(x) col[col %like% str_c("^", x)]))
+    children <- unlist(lapply(ele[-length(ele)],
+                              function(x) col[col %like% str_c("^", x)]))
     col2[col2 %in% children] <- ele[length(ele)]
     
   }
@@ -220,10 +238,12 @@ pgroup <- function(col, strgroup, suffix = ".grp", new = FALSE) {
 
 #' Examine whether one column in a data table is unique by another
 #' 
-#' @param x A list of column names or one column name without quote; the key which other columns should be unique by.
+#' @param x A list of column names or one column name without quote; the key
+#' which other columns should be unique by.
 #' @param ... Other columns to investigate uniqueness.
 #' @details No debugging / error catching.
-#' @value Returns a vector with the same length as \code{...} with values \code{TRUE} or \code{FALSE}.
+#' @value Returns a vector with the same length as \code{...} with values 
+#' \code{TRUE} or \code{FALSE}.
 #' @example dt[, ifunique(id, name, status)]
 #' dt[, ifunique(list(tour.code, date), tour.name, adult.price)]
 #' @export
@@ -235,7 +255,8 @@ ifunique <- function(x, ...) {
   for(i in 1:length(y)) {
     z <- y[[i]]
     dt <- data.table(do.call(cbind, x), z)
-    dupe <- dt[, .N, by = c(paste0("V", 1:n), "z")][, .N, by = c(paste0("V", 1:n))][N > 1]
+    dupe <- dt[, .N, by = c(paste0("V", 1:n), "z")] %>% 
+      .[, .N, by = c(paste0("V", 1:n))][N > 1]
     if(nrow(dupe) == 0) res <- TRUE else res <- FALSE
     out <- c(out, res)
   }
@@ -249,19 +270,23 @@ ifunique <- function(x, ...) {
 #' 
 #' @param x A vector to be matched.
 #' @param y A vector to find the match from.
-#' @param matchdt Optional. A data table with the first column being \code{y}. This is to help facilitate
-#' fuzzy match to raw names of alread matched names, and then merge to master names in one go.
+#' @param matchdt Optional. A data table with the first column being \code{y}.
+#' This is to help facilitate fuzzy match to raw names of alread matched names,
+#' and then merge to master names in one go.
 #' @param n Number of match results; default to 2.
 #' @param ... Further arguments to be passed onto \code{stringdistmatrix}.
-#' @details No debugging / error catching. Used \code{stringdistmatrix} from \code{stringdist}.
-#' @value Returns a \code{data.table} with the vector to be matched and \code{n} columns of closest matches.
+#' @details No debugging / error catching. Used \code{stringdistmatrix} from 
+#' \code{stringdist}.
+#' @value Returns a \code{data.table} with the vector to be matched and \code{n} 
+#' columns of closest matches.
 #' @example fuzzymatch(raw.names, master.names)
 #' @export
 fuzzymatch <- function(x, y, matchdt = NULL, n = 2, ...) {
   
   x <- unique(x) 
   y <- unique(y)
-  match.matrix <- stringdist::stringdistmatrix(str_to_upper(x), str_to_upper(y), ...)
+  match.matrix <- stringdist::stringdistmatrix(str_to_upper(x), 
+                                               str_to_upper(y), ...)
   rank.matrix <- t(apply(match.matrix, 1, frank, ties.method = "random"))
   for (i in 1:n) {
     match.index <- apply(rank.matrix, 1, function(x) which(x == i)) %>% unlist
@@ -292,8 +317,10 @@ fuzzymatch <- function(x, y, matchdt = NULL, n = 2, ...) {
 #' @param x A vector.
 #' @param y A vector.
 #' @param res Return data; see \code{value}.
-#' @value Returns lengths, # common entries, # entries only in x and in y. If \code{res = 0}, returns
-#' common elements, \code{res = 1} returns elements in x only, and \code{res = 2} returns in y only.
+#' @value Returns lengths, # common entries, # entries only in x and in y. If 
+#' \code{res = 0}, returns
+#' common elements, \code{res = 1} returns elements in x only, and 
+#' \code{res = 2} returns in y only.
 #' Any other values would return the summary table only. 
 #' @example set.diff(code1, code2)
 #' @export
@@ -304,8 +331,10 @@ set.diff <- function(x, y, res = -1) {
   x <- unique(x)
   y <- unique(y)
   
-  out <- data.table(xnm = c(length(x), length(intersect(x, y)), length(setdiff(x, y)), 0),
-                    ynm = c(length(y), length(intersect(x, y)), 0, length(setdiff(y, x))))
+  out <- data.table(xnm = c(length(x), length(intersect(x, y)), 
+                            length(setdiff(x, y)), 0),
+                    ynm = c(length(y), length(intersect(x, y)), 
+                            0, length(setdiff(y, x))))
   setnames(out, c(xnm, ynm))
   out <- cbind(value = c("length", "common", "in x only", "in y only"), out)
   
@@ -332,7 +361,8 @@ set.diff <- function(x, y, res = -1) {
 #'     pb.tick(12, i , 100)
 #'     Sys.sleep(0.02)
 #' }
-#' @details No error catching, especially around interrupted loops and start index.
+#' @details No error catching, especially around interrupted loops and 
+#' start index.
 #' @export
 setup.pb <- function(total) {
   progressbarsm <<- progress_bar$new(
@@ -357,9 +387,12 @@ pb.tick <- function(startind, ind, total) {
 #' Detect string pattern
 #' 
 #' @param col A vector of string.
-#' @param pattern Default to \code{Az0}. Supports \code{Aa0.} where each transforms all big letters,
-#' all small letters, all numbers, everything else to \code{A, a, 0} and \code{.}.
-#' @example dt[, .N, by = str.pattern(tour.code)][order(-N)]  # count of code patterns
+#' @param pattern Default to \code{Az0}. Supports \code{Aa0.} where each 
+#' transforms all big letters,
+#' all small letters, all numbers, everything else to \code{A, a, 0} 
+#' and \code{.}.
+#' @example dt[, .N, by = str.pattern(tour.code)][order(-N)]  # count of
+#'  code patterns
 #' @export
 str.pattern <- function(col, pattern = "Aa0") {
   
@@ -399,16 +432,19 @@ naorb <- function(x) {
 
 #' Difference of dates in months
 #' 
-#' @param date Date in format \code{%Y-%m-%d}, the \code{-} can be any single symbol, such as \code{/}.
+#' @param date Date in format \code{%Y-%m-%d}, the \code{-} can be any single
+#'  symbol, such as \code{/}.
 #' @param refdate Reference date in the same format.
-#' @param since If \code{TRUE}, months since date to reference date, eg from date to now (ref), else
+#' @param since If \code{TRUE}, months since date to reference date, eg from 
+#' date to now (ref), else
 #' month from reference date to date, eg from now (ref) to a future dat)
 #' @values A vector of same length
 #' @export
 months.diff <- function(date, refdate, since = TRUE) {
   
   if(class(date) == "Date" & class(refdate) == "Date") {
-    diff.in.months <- 12 * (year(refdate) - year(date)) + month(refdate) - month(date)
+    diff.in.months <- 12 * (year(refdate) - year(date)) + 
+      month(refdate) - month(date)
   } else {
     y.refdate <- as.integer(str_sub(refdate, 1, 4))
     m.refdate <- as.integer(str_sub(refdate, 6, 7))
