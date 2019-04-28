@@ -26,7 +26,7 @@ summarise <- function(dt, writepath = str_c(getwd(), "/Data Summary.xlsx"),
   cat("Data has", dims[1], "rows and", dims[2], "columns.\n")
   cat("Summarising Columns...\n")
   
-  # columns
+  # summarise by column
   out <- dt[, .(N = 1:ncol(dt),
                 ColName = names(dt),
                 uniqueN = lapply(.SD, uniqueN),
@@ -38,25 +38,29 @@ summarise <- function(dt, writepath = str_c(getwd(), "/Data Summary.xlsx"),
                 Min = lapply(.SD, min, na.rm = TRUE),
                 Max = lapply(.SD, max, na.rm = TRUE))]
   
+  
+  # find columns where unique levels are between 2 and 5 for level summary
   cols <- out[uniqueN <= 5 & uniqueN > 2, ColName]
   
+  # add five extra columns for levels
   out[, str_c("Level", 1:5) := ""]
   
-  
+  # find levels and write to table
   out[ColName %in% cols,
       str_c("Level", 1:5) :=
-        data.table(t(dt[, lapply(.SD,
-                                 function(x) 
-                                   c(unique(x), rep("", 5 - uniqueN(x)))),
-                        .SDcols = (cols)]))]
+        data.table(
+          t(dt[, 
+               lapply(.SD, function(x) c(unique(x), rep("", 5 - uniqueN(x)))),
+               .SDcols = (cols)]
+            ))]
   
   out <- cbind(out[, 1:7], out[, 
                                lapply(.SD, 
                                       function(x) lapply(x, as.character)), 
                                .SDcols = 8:14])
   out <- out[, lapply(.SD, unlist)]
-  # out[Class == "numeric", `:=`(Min = as.numeric(Min), Max = as.numeric(Max))]
-  
+
+  # write output
   if(!is.null (writepath) ) {
     cat("Writing Excel...\n")
     if (append == "Data Summary") 
@@ -79,7 +83,7 @@ summarise <- function(dt, writepath = str_c(getwd(), "/Data Summary.xlsx"),
 }
 
 
-#' Copy to clipboard
+#' Copy to clipboard.
 #'
 #' @param x Data to copy to clipboard.
 #' @param row.names Whether to include row names. Default to \code{FALSE}.
@@ -94,6 +98,13 @@ cp <- function(x, row.names = FALSE, excel.names = TRUE) {
 }
 
 
+#' Copy to clipboard (large file).
+#'
+#' @param x Data to copy to clipboard.
+#' @param row.names Whether to include row names. Default to \code{FALSE}.
+#' @param excel.names Whether to convert col names to Title Case. Default to 
+#' \code{TRUE}.
+#' @export
 cp2 <- function(x, row.names = FALSE, excel.names = TRUE) {
   if(excel.names)
     write.table(excel.names(x), "clipboard", row.names = row.names, sep = "\t") else
@@ -101,7 +112,7 @@ cp2 <- function(x, row.names = FALSE, excel.names = TRUE) {
   
 }
 
-#' Clean column names in a data table
+#' Clean column names in a data table.
 #'
 #' @param dt Data table to clean names.
 #' @value Returns the data table with cleaned names.
@@ -117,12 +128,11 @@ clean.names <- function(dt) {
   
   names(dt) <- x
   return(dt)
-  
-  
+
 }
 
 
-#' Convert col names to title names
+#' Convert col names to title names.
 #'
 #' @param x Data to convert col names back to Proper Title Case.
 #' @value Returns the data table with Title Case col names.
@@ -189,7 +199,7 @@ parse2v <- function(string, sep = ",") {
 }
 
 
-#' Pivot table inspired grouping?
+#' Pivot table inspired grouping.
 #' 
 #' @param col Vector; use in \code{data.table}.
 #' @param strgroup Grouping string in the format of \code{"Other+Unknown=Other"}.
@@ -208,37 +218,44 @@ parse2v <- function(string, sep = ",") {
 pgroup <- function(col, strgroup, suffix = ".grp", new = FALSE) {
   
   colnm <- deparse(substitute(col))
+  # col0 is original cols, col and col2 is the uniqued version
   col0 <- copy(col)
   col <- unique(col)
   col2 <- col
+  # parsed vector of all groupings
   vec <- unlist(str_split(strgroup, ","))
   
   for(i in 1:length(vec)) {
+    # parse elements of the string in one grouping
     ele <- unlist(str_split(vec[i], "\\+|="))
+    # special NA treatment
     if (any(ele=="NA")) col2[is.na(col)] <- ele[length(ele)]
+    # a list of values without the last element of the parsed string list, 
+    # which is the new group name
     children <- unlist(lapply(ele[-length(ele)],
                               function(x) col[col %like% str_c("^", x)]))
+    # replace every parsed entry of the column with the new group name
     col2[col2 %in% children] <- ele[length(ele)]
     
   }
   
+  # construct output data table
   out <- data.table(col, col2)
   setnames(out, c(colnm, str_c(colnm, suffix)))
-  
   
   if(new) {
     for(i in 1:length(col)) col0[col0 == col[i]] <- col2[i]
     return(col0)
+  } else {
+    return(out)
   }
-  
-  return(out)
   
 }
 
 
-#' Examine whether one column in a data table is unique by another
+#' Examine whether one column in a data table is unique by another.
 #' 
-#' @param x A list of column names or one column name without quote; the key
+#' @param keycols A list of column names or one column name without quote; the key
 #' which other columns should be unique by.
 #' @param ... Other columns to investigate uniqueness.
 #' @details No debugging / error catching.
@@ -247,16 +264,20 @@ pgroup <- function(col, strgroup, suffix = ".grp", new = FALSE) {
 #' @example dt[, ifunique(id, name, status)]
 #' dt[, ifunique(list(tour.code, date), tour.name, adult.price)]
 #' @export
-ifunique <- function(x, ...) {
+ifunique <- function(keycols, ...) {
   
-  if(class(x) == "list") n <- length(x) else {x <- list(x); n <- 1}
-  y <- list(...)
+  if(class(x) == "list") n <- length(keycols) else 
+    {keycols <- list(keycols); n <- 1}
+  testcols <- list(...)
   out <- c()
-  for(i in 1:length(y)) {
-    z <- y[[i]]
-    dt <- data.table(do.call(cbind, x), z)
+  for(i in 1:length(testcols)) {
+    testcol <- testcols[[i]]
+    # create a dt of keycols + testcol
+    dt <- data.table(do.call(cbind, keycols), testcol)
+    # find duplicate rows by [, .N, by]
     dupe <- dt[, .N, by = c(paste0("V", 1:n), "z")] %>% 
       .[, .N, by = c(paste0("V", 1:n))][N > 1]
+    # if the duplicate table has any entry, keys are not unique
     if(nrow(dupe) == 0) res <- TRUE else res <- FALSE
     out <- c(out, res)
   }
@@ -266,7 +287,7 @@ ifunique <- function(x, ...) {
 }
 
 
-#' Fuzzy match; suggest possible match results
+#' Fuzzy match; suggest possible match results.
 #' 
 #' @param x A vector to be matched.
 #' @param y A vector to find the match from.
@@ -285,9 +306,12 @@ fuzzymatch <- function(x, y, matchdt = NULL, n = 2, ...) {
   
   x <- unique(x) 
   y <- unique(y)
+  # generate string dist matrix
   match.matrix <- stringdist::stringdistmatrix(str_to_upper(x), 
                                                str_to_upper(y), ...)
+  # rank string dist for every row
   rank.matrix <- t(apply(match.matrix, 1, frank, ties.method = "random"))
+  # find the top ones
   for (i in 1:n) {
     match.index <- apply(rank.matrix, 1, function(x) which(x == i)) %>% unlist
     match.res <- y[match.index]
@@ -297,6 +321,7 @@ fuzzymatch <- function(x, y, matchdt = NULL, n = 2, ...) {
   out <- data.table(x, out)
   setnames(out, c("raw", str_c("match", 1:n)))
   
+  # if matchdt is provided, merge with it
   if(!is.null(matchdt)) {
     
     out[, N := 1:.N]
@@ -312,7 +337,7 @@ fuzzymatch <- function(x, y, matchdt = NULL, n = 2, ...) {
 }
 
 
-#' Set difference between two vectors; imagine the Venn Diagram
+#' Set difference between two vectors; imagine the Venn Diagram.
 #' 
 #' @param x A vector.
 #' @param y A vector.
@@ -346,12 +371,11 @@ set.diff <- function(x, y, res = -1) {
     if(res == 1) return(list(setdiff = out, in.x.only = outv)) else
       if (res == 2) return(list(setdiff = out, in.y.only = outv)) else
         return(out)
-  
-  
+
 }
 
 
-#' Progress bar for loops - no need to set up every time
+#' Progress bar for loops - no need to set up every time.
 #' 
 #' @param ind Index in the loop.
 #' @param total Size of loop.
@@ -384,7 +408,7 @@ pb.tick <- function(startind, ind, total) {
 }
 
 
-#' Detect string pattern
+#' Detect string pattern.
 #' 
 #' @param col A vector of string.
 #' @param pattern Default to \code{Az0}. Supports \code{Aa0.} where each 
@@ -406,7 +430,7 @@ str.pattern <- function(col, pattern = "Aa0") {
 }
 
 
-#' Case-insensitive %like%
+#' Case-insensitive %like%.
 #' 
 #' @param x String to be detected.
 #' @param pattern String pattern (regex), case insensitive.
@@ -416,7 +440,7 @@ str.pattern <- function(col, pattern = "Aa0") {
 }
 
 
-#' Detect NA or blank
+#' Detect NA or blank.
 #' 
 #' @param x A vector
 #' @example dt <- dt[!naorb(col)]
@@ -430,7 +454,7 @@ naorb <- function(x) {
 }
 
 
-#' Difference of dates in months
+#' Difference of dates in months.
 #' 
 #' @param date Date in format \code{%Y-%m-%d}, the \code{-} can be any single
 #'  symbol, such as \code{/}.
