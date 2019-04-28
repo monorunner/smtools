@@ -1,0 +1,19 @@
+Package: smtools
+Title: Data tools for consultants
+Version: 0.1
+Authors@R: person("Shane", "Mono", email="mail@sm-art.cc",
+                  role = c("aut", "cre"))
+Description: Data tools for consultants
+Depends: 
+    R (>= 3.1.0),
+    data.table
+License: MIT
+LazyData: true
+Imports:
+    data.table,
+    XLConnect,
+    stringr,
+    progress,
+  	stringdist
+RoxygenNote: 6.1.1
+Encoding: UTF-8

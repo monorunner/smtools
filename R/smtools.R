@@ -2,11 +2,11 @@
 # ======== 0000-00-00 ======== #
 # -------- shane.mono -------- #
 
-
 library(data.table)
 library(stringr)
 library(XLConnect)
 library(progress)
+
 
 #' Summarise data columns.
 #'
