@@ -18,3 +18,5 @@ Imports:
     progress,
 RoxygenNote: 6.1.1
 Encoding: UTF-8
+Suggests: 
+    testthat (>= 2.1.0)
