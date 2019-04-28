@@ -7,12 +7,12 @@ Description: Data tools for consultants
 Depends: 
     R (>= 3.1.0),
     data.table,
+    stringr
 License: MIT
 LazyData: true
 Imports:
     data.table,
     XLConnect,
-    stringr,
     progress,
     stringi,
     stringdist

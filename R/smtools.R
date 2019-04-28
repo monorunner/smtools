@@ -4,8 +4,6 @@
 
 library(data.table)
 library(stringr)
-library(XLConnect)
-library(progress)
 
 
 #' Summarise data columns.
@@ -66,16 +64,16 @@ summarise <- function(dt, writepath = str_c(getwd(), "/Data Summary.xlsx"),
     if (append == "Data Summary") 
       file.copy(from = "./data/Data Summary Template.xlsx",
                 to = writepath, overwrite = TRUE)
-    wb <- loadWorkbook(writepath)
-    setStyleAction(wb, XLC$"STYLE_ACTION.NONE")
+    wb <- XLConnect::loadWorkbook(writepath)
+    XLConnect::setStyleAction(wb, XLC$"STYLE_ACTION.NONE")
     if(append != "Data Summary") {
-      cloneSheet(wb, 1, append)
-      clearRange(wb, append, c(2, 10, 15, 150))  }
-    writeWorksheet(wb, out, append, startRow=9, startCol=2, header=TRUE)
-    writeWorksheet(wb, dims, append, startRow=5, startCol=3, header=FALSE)
-    writeWorksheet(wb, append, append, startRow=2, startCol=2, header=FALSE)
+      XLConnect::cloneSheet(wb, 1, append)
+      XLConnect::clearRange(wb, append, c(2, 10, 15, 150))  }
+    XLConnect::writeWorksheet(wb, out, append, startRow=9, startCol=2, header=TRUE)
+    XLConnect::writeWorksheet(wb, dims, append, startRow=5, startCol=3, header=FALSE)
+    XLConnect::writeWorksheet(wb, append, append, startRow=2, startCol=2, header=FALSE)
     
-    saveWorkbook(wb)
+    XLConnect::saveWorkbook(wb)
   }
   
   return(out)
@@ -389,7 +387,7 @@ set.diff <- function(x, y, res = -1) {
 #' start index.
 #' @export
 setup.pb <- function(total) {
-  progressbarsm <<- progress_bar$new(
+  progressbarsm <<- progress::progress_bar$new(
     format = "  Processed :ind of :total [:bar] :percent in :elapsed",
     clear = FALSE, total = total)
 }
