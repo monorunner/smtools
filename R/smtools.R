@@ -416,7 +416,7 @@ pb.tick <- function(startind, ind, total) {
 #' @example dt[, .N, by = str.pattern(tour.code)][order(-N)]  # count of
 #'  code patterns
 #' @export
-str.pattern <- function(col, pattern = "Aa0") {
+strpattern <- function(col, pattern = "Aa0") {
   
   if(pattern %like% "A") col <- gsub("[A-Z]", "A", col)
   if(pattern %like% "a") col <- gsub("[a-z]", "a", col)
@@ -462,7 +462,7 @@ naorb <- function(x) {
 #' month from reference date to date, eg from now (ref) to a future dat)
 #' @values A vector of same length
 #' @export
-months.diff <- function(date, refdate, since = TRUE) {
+monthsdiff <- function(date, refdate, since = TRUE) {
   
   if(class(date) == "Date" & class(refdate) == "Date") {
     diff.in.months <- 12 * (year(refdate) - year(date)) + 
